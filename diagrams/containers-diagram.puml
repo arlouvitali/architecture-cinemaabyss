@@ -1,0 +1,68 @@
+@startuml CinemaAbyss Container Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(mobile_user, "Пользователь мобильного устройства", "Мобильное приложение")
+Person(desktop_user, "Пользователь ноутбука", "Веб-приложение")
+Person(tv_user, "Пользователь смарт ТВ", "ТВ-приложение")
+
+System_Boundary(cinemaabyss, "CinemaAbyss") {
+    Container(proxy, "API Gateway (Proxy Service)", "Go", "Единая точка входа, маршрутизация запросов")
+    Container(mobile_bff, "Mobile BFF", "Go", "Backend for Frontend для мобильных устройств")
+    Container(desktop_bff, "Desktop BFF", "Go", "Backend for Frontend для ноутбуков")
+    Container(tv_bff, "TV BFF", "Go", "Backend for Frontend для смарт ТВ")
+    Container(users_service, "Users Service", "Go", "Управление пользователями")
+    Container(payments_service, "Payments Service", "Go", "Управление платежами")
+    Container(subscriptions_service, "Subscriptions Service", "Go", "Управление подписками")
+    Container(movies_service, "Movies Service", "Go", "Метаданные о фильмах")
+    Container(events_service, "Events Service", "Go", "Обработка событий через Kafka")
+    ContainerDb(postgres, "PostgreSQL", "Per-service relational databases", "Отдельные базы данных для каждого микросервиса")
+    ContainerQueue(kafka, "Kafka", "Message Broker", "Асинхронная обработка событий")
+}
+
+System_Ext(payment_gateway, "Платежные системы", "Внешние платежные провайдеры")
+System_Ext(marketing, "Маркетплейсы и лояльность", "Внешние интеграции")
+System_Ext(recommendation, "Рекомендательная система", "Внешний сервис", "Подборка контента")
+
+Rel(mobile_user, proxy, "HTTP/REST", "Запросы от мобильного приложения")
+Rel(desktop_user, proxy, "HTTP/REST", "Запросы от веб-приложения")
+Rel(tv_user, proxy, "HTTP/REST", "Запросы от ТВ-приложения")
+
+Rel(proxy, mobile_bff, "HTTP/REST", "Маршрутизация к Mobile BFF")
+Rel(proxy, desktop_bff, "HTTP/REST", "Маршрутизация к Desktop BFF")
+Rel(proxy, tv_bff, "HTTP/REST", "Маршрутизация к TV BFF")
+
+Rel(mobile_bff, users_service, "HTTP/REST", "Вызов users service")
+Rel(mobile_bff, payments_service, "HTTP/REST", "Вызов payments service")
+Rel(mobile_bff, subscriptions_service, "HTTP/REST", "Вызов subscriptions service")
+Rel(mobile_bff, movies_service, "HTTP/REST", "Вызов movies service")
+Rel(mobile_bff, events_service, "HTTP/REST", "Вызов events service")
+
+Rel(desktop_bff, users_service, "HTTP/REST", "Вызов users service")
+Rel(desktop_bff, payments_service, "HTTP/REST", "Вызов payments service")
+Rel(desktop_bff, subscriptions_service, "HTTP/REST", "Вызов subscriptions service")
+Rel(desktop_bff, movies_service, "HTTP/REST", "Вызов movies service")
+Rel(desktop_bff, events_service, "HTTP/REST", "Вызов events service")
+
+Rel(tv_bff, users_service, "HTTP/REST", "Вызов users service")
+Rel(tv_bff, payments_service, "HTTP/REST", "Вызов payments service")
+Rel(tv_bff, subscriptions_service, "HTTP/REST", "Вызов subscriptions service")
+Rel(tv_bff, movies_service, "HTTP/REST", "Вызов movies service")
+Rel(tv_bff, events_service, "HTTP/REST", "Вызов events service")
+
+Rel(users_service, postgres, "JDBC", "CRUD операции с пользователями")
+Rel(payments_service, postgres, "JDBC", "CRUD операции с платежами")
+Rel(subscriptions_service, postgres, "JDBC", "CRUD операции с подписками")
+Rel(movies_service, postgres, "JDBC", "CRUD операции с фильмами")
+
+Rel(movies_service, events_service, "HTTP/REST", "Генерация событий фильма")
+Rel(payments_service, events_service, "HTTP/REST", "Генерация событий платежа")
+Rel(users_service, events_service, "HTTP/REST", "Генерация событий пользователя")
+
+BiRel(events_service, kafka, "Produce/Consume", "Отправка и чтение событий")
+
+Rel(movies_service, recommendation, "API", "Запрос рекомендаций")
+
+Rel(payments_service, payment_gateway, "API", "Обработка платежей")
+Rel(subscriptions_service, marketing, "API", "Интеграция с маркетплейсами и программами лояльности")
+
+@enduml
