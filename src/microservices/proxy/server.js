@@ -1,4 +1,5 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
@@ -10,7 +11,11 @@ const EVENTS_SERVICE_URL = process.env.EVENTS_SERVICE_URL || 'http://localhost:8
 const GRADUAL_MIGRATION = process.env.GRADUAL_MIGRATION === 'true';
 const MOVIES_MIGRATION_PERCENT = parseInt(process.env.MOVIES_MIGRATION_PERCENT) || 0;
 
-app.use(express.json());
+app.use(bodyParser.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 app.get('/health', (req, res) => {
   res.send('Strangler Fig Proxy is healthy');
@@ -28,6 +33,12 @@ app.use('/api/movies', (req, res, next) => {
         changeOrigin: true,
         pathRewrite: {
           '^/api/movies': '/api/movies'
+        },
+        onProxyReq: (proxyReq, req, res) => {
+          if (req.rawBody) {
+            proxyReq.setHeader('Content-Length', Buffer.byteLength(req.rawBody));
+            proxyReq.write(req.rawBody);
+          }
         }
       })(req, res, next);
     } else {
@@ -38,6 +49,12 @@ app.use('/api/movies', (req, res, next) => {
         changeOrigin: true,
         pathRewrite: {
           '^/api/movies': '/api/movies'
+        },
+        onProxyReq: (proxyReq, req, res) => {
+          if (req.rawBody) {
+            proxyReq.setHeader('Content-Length', Buffer.byteLength(req.rawBody));
+            proxyReq.write(req.rawBody);
+          }
         }
       })(req, res, next);
     }
@@ -47,6 +64,12 @@ app.use('/api/movies', (req, res, next) => {
       changeOrigin: true,
       pathRewrite: {
         '^/api/movies': '/api/movies'
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        if (req.rawBody) {
+          proxyReq.setHeader('Content-Length', Buffer.byteLength(req.rawBody));
+          proxyReq.write(req.rawBody);
+        }
       }
     })(req, res, next);
   }
@@ -57,6 +80,12 @@ app.use('/api/users', createProxyMiddleware({
   changeOrigin: true,
   pathRewrite: {
     '^/api/users': '/api/users'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.rawBody) {
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(req.rawBody));
+      proxyReq.write(req.rawBody);
+    }
   }
 }));
 
@@ -65,6 +94,12 @@ app.use('/api/payments', createProxyMiddleware({
   changeOrigin: true,
   pathRewrite: {
     '^/api/payments': '/api/payments'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.rawBody) {
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(req.rawBody));
+      proxyReq.write(req.rawBody);
+    }
   }
 }));
 
@@ -73,6 +108,12 @@ app.use('/api/subscriptions', createProxyMiddleware({
   changeOrigin: true,
   pathRewrite: {
     '^/api/subscriptions': '/api/subscriptions'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.rawBody) {
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(req.rawBody));
+      proxyReq.write(req.rawBody);
+    }
   }
 }));
 
@@ -81,6 +122,12 @@ app.use('/api/events', createProxyMiddleware({
   changeOrigin: true,
   pathRewrite: {
     '^/api/events': '/api/events'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.rawBody) {
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(req.rawBody));
+      proxyReq.write(req.rawBody);
+    }
   }
 }));
 
